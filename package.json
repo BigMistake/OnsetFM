@@ -1,0 +1,15 @@
+{
+	"author": "BigMistake",
+	"original_author": "FinnCoding",
+	"version": "1.0",
+	"server_scripts": [
+		"/server/host.lua"
+	],
+	"client_scripts": [
+		"/client/radio.lua",
+		"config.lua"
+	],
+	"files": [
+		"tracks/0-addtrackshere.mp3"
+	]
+}
