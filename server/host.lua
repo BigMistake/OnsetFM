@@ -37,7 +37,7 @@ function GetTracks()
 end
 
 function GetStreams()
-    local file = "packages\\OnsetRadio\\tracks\\streams.txt"
+    local file = "packages\\OnsetFM\\tracks\\streams.txt"
     lines = {}
     for line in io.lines(file) do 
       lines[#lines + 1] = line
