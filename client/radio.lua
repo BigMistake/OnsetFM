@@ -9,32 +9,23 @@ radioStatus = 0
 currenttrack = 1
 player = GetPlayerId()
 radiovolume = 1.0
-muted = false
 
 function PlayAudio()
+    carplaying = GetPlayerVehicle(player)
+    local x, y, z = GetVehicleLocation(carplaying)
+    AddPlayerChat("Car: "..carplaying..". X, Y, Z: "..x.." "..y.." "..z..".")
+    
+
     if channels[selectedchannel][1] == "stream" then
         local file = tostring(channels[selectedchannel][2])
-        radio = CreateSound(file)
+        radio = CreateSound3D(file, x, y, z, RadioRadius)
         SetVolume()
 
     elseif channels[selectedchannel][1] == "tracks" then
         local duration = tonumber(string.match(channels[selectedchannel][2][currenttrack], "(%d+)%-")) * 1000
         local file = tostring("OnsetFM/tracks/"..channels[selectedchannel][2][currenttrack])
-        radio = CreateSound(file)
+        radio = CreateSound3D(file, x, y, z, RadioRadius)
         SetVolume()
-
-        Delay(duration,function()
-            if radioStatus == 1 and channels[selectedchannel][1] == "tracks" then
-                if currenttrack == tracksamount then
-                    currenttrack = 1
-                    PlayAudio()
-                else
-                    currenttrack = currenttrack + 1
-                    PlayAudio()
-                end
-            end
-        end)
-        
     end
 end
 
@@ -45,17 +36,41 @@ function AddChatNotification(text)
 end
 
 function SetVolume()
-    if muted then
-        SetSoundVolume(radio, 0.0)
+    SetSoundVolume(radio, radiovolume)
+end
+
+function IncreaseTrack()
+    if currenttrack == tracksamount then
+        DestroySound(radio)
+        currenttrack = 1
+        PlayAudio()
     else
-        SetSoundVolume(radio, radiovolume)
+        DestroySound(radio)
+        currenttrack = currenttrack + 1
+        PlayAudio()
     end
 end
 
+function DecreaseTrack()
+    if currenttrack == 1 then
+        DestroySound(radio)
+        currenttrack = tracksamount
+        PlayAudio()
+    else
+        DestroySound(radio)
+        currenttrack = currenttrack - 1
+        PlayAudio()
+    end
+end
+
+AddEvent("OnSoundFinished", function(sound)
+    if radio ~= nil and sound == radio then
+        IncreaseTrack()
+    end
+end)
+
 AddEvent("OnKeyPress", function (key)
     if IsPlayerInVehicle() then
-        muted = false
-
         if key == OnOff then
             if radioStatus == 1 then
                 AddChatNotification("Radio is turning off...")
@@ -94,32 +109,46 @@ AddEvent("OnKeyPress", function (key)
             elseif key == RaiseVolume then
                 if radiovolume ~= 2.0 then
                     radiovolume = radiovolume + 0.1
-                    SetSoundVolume(radio, radiovolume)
+                    SetVolume()
                     AddChatNotification("Raising radio volume to "..radiovolume..".")
                 end
             elseif key == LowerVolume then
                 if radiovolume ~= 0.0 then
                     radiovolume = radiovolume - 0.1
-                    SetSoundVolume(radio, radiovolume)
+                    SetVolume()
                     AddChatNotification("Lowering radio volume to "..radiovolume..".")
                 end
+            elseif key == NextTrack and EnableTrackControl then
+                IncreaseTrack()
+            elseif key == PreviousTrack and EnableTrackControl then
+                DecreaseTrack()
             end 
         end
     end
 end)
 
-AddEvent("OnPlayerLeaveVehicle", function()
-    if radio ~= nil and MuteOutOfCar then
-        SetSoundVolume(radio, 0.0)
-        muted = true
+AddEvent("OnGameTick", function()
+    if radio ~= nil then
+        local x, y, z = GetVehicleLocation(carplaying)
+        SetSound3DLocation(radio, x, y, z)
     end
 end)
 
-AddEvent("OnPlayerEnterVehicle", function(playerid, vehicle, seat)
-    if radio ~= nil and MuteOutOfCar then
-        SetSoundVolume(radio, radiovolume)
-        mute = false
+AddEvent("OnPackageStop", function()
+    if radio ~= nil then
+        DestroySound(radio)
     end
+
+    tracks = {}
+    tracksamount = 0
+    streams = {}
+    streamsamount = 0
+    channels = {}
+    channelsamount = 0
+    selectedchannel = 1
+    radioStatus = 0
+    currenttrack = 1
+    radiovolume = 1.0
 end)
 
 AddRemoteEvent("ExchangingAudio", function(arg1, arg2, arg3, arg4)

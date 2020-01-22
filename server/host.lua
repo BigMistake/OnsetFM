@@ -37,7 +37,7 @@ function GetTracks()
 end
 
 function GetStreams()
-    local file = "packages\\OnsetRadio\\tracks\\streams.txt"
+    local file = "packages\\OnsetFM\\tracks\\streams.txt"
     lines = {}
     for line in io.lines(file) do 
       lines[#lines + 1] = line
@@ -49,7 +49,18 @@ end
 
 GetTracks()
 GetStreams()
+print("Streams: "..streamsamount)
+print("Tracks: "..tracksamount)
 
 AddEvent("OnPlayerSpawn", function(playerid)
     CallRemoteEvent(playerid, "ExchangingAudio", tracks, tracksamount, streams, streamsamount)
+    print(tracksamount)
+    print(streamsamount)
+end)
+
+AddEvent("OnPackageStop", function()
+    tracks = {}
+    tracksamount = 0
+    streams = {}
+    streamsamount = 0
 end)
